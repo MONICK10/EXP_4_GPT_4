@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ex 4 · Personalized Recommendation System · URK23CS1167</title>
+<link rel="stylesheet" href="/static/style.css">
+<style>:root { --accent: #059669; --accent-soft: #ecfdf5; } .score { font-size: 18px; font-weight: 700; color: var(--accent); }</style>
+</head>
+<body>
+{% include "_header.html" %}
+<main class="layout">
+  <section>
+    <div class="card" id="card-input">
+      <h2>User Profile <span class="module-tag">Input Module</span></h2>
+      <p class="hint">Catalog: {{ n_items }} courses, projects, books and certifications.</p>
+      <div class="row">
+        <div><label for="name">Name</label><input id="name" value="Monick"></div>
+        <div><label for="age">Age</label><input id="age" type="number" value="21"></div>
+      </div>
+      <label for="background">Background</label><input id="background" value="Final-year B.Tech Computer Science student">
+      <label for="interests">Interests (comma separated)</label><input id="interests" value="Artificial Intelligence, Python, Cloud">
+      <div class="row">
+        <div><label for="level">Skill Level</label><select id="level">{% for l in levels %}<option>{{ l }}</option>{% endfor %}</select></div>
+        <div><label for="category">Preferred Category</label><select id="category">{% for c in categories %}<option>{{ c }}</option>{% endfor %}</select></div>
+      </div>
+      <label for="goal">Goal</label><input id="goal" value="Build real AI applications and get placed">
+      <label for="prefs">Preferences</label>
+      <textarea id="prefs">I prefer practical, hands-on learning with projects rather than theory. I can spend about 1 hour a day.</textarea>
+      <label for="n">Number of items</label><input id="n" type="number" value="5" min="1" max="10">
+      <button id="btn-go">Get Recommendations</button>
+    </div>
+    <div class="card hidden" id="card-profile"><h2>Collected User Profile <span class="module-tag">Profile Module</span></h2><div class="out"></div></div>
+    <div class="card hidden" id="card-pref"><h2>Preference Analysis <span class="module-tag">Preference Module</span></h2><div class="out"></div></div>
+  </section>
+  <section>
+    <div class="card hidden" id="card-prompt"><h2>Prompt Generation <span class="module-tag">Prompt Module</span></h2><pre class="code out"></pre></div>
+    <div class="card hidden" id="card-llm"><h2>LLM Recommendations <span class="module-tag">Recommendation Module</span></h2>
+      <p class="hint">Items chosen by the LLM from the semantic-search candidates ({{ method }}).</p><div class="out"></div></div>
+    <div class="card hidden" id="card-rank"><h2>Recommendation Ranking <span class="module-tag">Ranking Module</span></h2>
+      <p class="hint">Score = 50% similarity + 20% level match + 15% learning-style match + 15% LLM rank.</p><div class="out"></div></div>
+    <div class="card hidden" id="card-explain"><h2>Why these? <span class="module-tag">Explanation Module</span></h2><div class="out"></div></div>
+    <div class="card hidden" id="card-feedback">
+      <h2>Your Feedback <span class="module-tag">Feedback + Intent Module</span></h2>
+      <p class="hint">Tell the AI what to change. It detects your intent first.</p>
+      <input id="fb" value="I am more interested in Generative AI and projects than cloud certifications.">
+      <div class="btns"><button id="btn-fb">Send Feedback</button><button id="btn-save" class="secondary">Save Recommendations</button></div>
+      <div class="out" id="fb-out"></div>
+    </div>
+    <div class="card hidden" id="card-refined"><h2>Refined Recommendations <span class="module-tag">Feedback Module</span></h2><div class="out"></div></div>
+    <div class="card hidden" id="card-saved"><h2>Saved <span class="module-tag">Save Module</span></h2><div class="out"></div></div>
+  </section>
+</main>
+<footer>Monick S · URK23CS1167 · Karunya Institute of Technology and Sciences</footer>
+<script src="/static/ui.js"></script>
+<script>
+const S = {};
+const form = () => ({ name: $("#name").value, age: $("#age").value, background: $("#background").value, interests: $("#interests").value,
+  skill_level: $("#level").value, category: $("#category").value, goal: $("#goal").value, preferences: $("#prefs").value, n_items: $("#n").value });
+
+const rankTable = (rows) => table(rows, [["rank", "#"], ["title", "Recommendation", (r) => `<b>${esc(r.title)}</b><br><small>${esc(r.category)} · ${esc(r.level)} · ${esc(r.type)}</small>`],
+  ["explanation", "Reason", (r) => esc(r.explanation || r.llm_reason)],
+  ["score", "Score", (r) => `<span class="score">${r.score}%</span><div class="bar"><span style="width:${r.score}%"></span></div>`]]);
+
+function showProfile(p, pref) {
+  showCard("card-profile", `<div class="kv"><div>Name</div><div>${esc(p.name)}</div><div>Age</div><div>${esc(p.age)}</div>
+    <div>Background</div><div>${esc(p.background)}</div><div>Interests</div><div>${p.interests.map((i) => `<span class="badge">${esc(i)}</span>`).join(" ")}</div>
+    <div>Skill level</div><div>${esc(p.skill_level)}</div><div>Category</div><div>${esc(p.category)}</div><div>Goal</div><div>${esc(p.goal)}</div>
+    <div>Items wanted</div><div>${p.n_items}</div></div><p><b>Summary:</b> ${esc(p.summary)}</p>`);
+  showCard("card-pref", `<div class="kv"><div>Key interests</div><div>${pref.key_interests.map((i) => `<span class="badge">${esc(i)}</span>`).join(" ")}</div>
+    <div>Learning style</div><div><b>${esc(pref.learning_style)}</b></div><div>Focus areas</div><div>${esc(pref.focus_areas.join(", ") || "-")}</div>
+    <div>Avoid</div><div>${esc(pref.avoid.join(", ") || "-")}</div></div><p>${esc(pref.summary)}</p>`);
+}
+
+$("#btn-go").onclick = (e) => withLoading(e.target, async () => {
+  const a = await api("/api/analyze", form()); Object.assign(S, a);
+  showProfile(a.profile, a.pref);
+  showCard("card-prompt"); $("#card-prompt pre").textContent = a.prompt;
+  const r = await api("/api/recommend", { profile: a.profile, pref: a.pref, candidates: a.candidates, prompt: a.prompt });
+  S.ranked = r.ranked;
+  showCard("card-llm", "<ol>" + r.picks.map((p) => `<li><b>${esc(p.title)}</b> <small>(${esc(p.item_id)})</small><br>${esc(p.llm_reason)}</li>`).join("") + "</ol>");
+  showCard("card-rank", rankTable(r.ranked));
+  const x = await api("/api/explain", { ranked: r.ranked, profile: a.profile });
+  S.ranked.forEach((it) => it.explanation = x.explanations[it.item_id]);
+  showCard("card-explain", S.ranked.map((it) => `<p><b>${it.rank}. ${esc(it.title)}</b><br>${esc(it.explanation)}</p>`).join(""));
+  showCard("card-rank", rankTable(S.ranked));
+  showCard("card-feedback");
+});
+
+const showSaved = (s) => showCard("card-saved", `<div class="notice ok">✔ ${s.count} recommendations saved successfully</div><div class="kv"><div>File</div><div>${esc(s.file)}</div></div>`);
+
+$("#btn-fb").onclick = (e) => withLoading(e.target, async () => {
+  const r = await api("/api/feedback", { text: $("#fb").value, profile: S.profile, pref: S.pref, ranked: S.ranked });
+  let h = `<div class="kv" style="margin-top:12px"><div>Detected intent</div><div><span class="badge">${r.intent.intent}</span> <small>(${esc(r.intent.source)})</small></div><div>Reason</div><div>${esc(r.intent.reason)}</div>`;
+  if (r.changes) h += `<div>Added interests</div><div>${esc(r.changes.added_interests.join(", ") || "-")}</div><div>Now avoiding</div><div>${esc(r.changes.avoid.join(", ") || "-")}</div><div>Change</div><div>${esc(r.changes.summary)}</div>`;
+  $("#fb-out").innerHTML = h + "</div>";
+  if (r.ranked) { Object.assign(S, { profile: r.profile, pref: r.pref, ranked: r.ranked }); showCard("card-refined", rankTable(r.ranked)); }
+  if (r.explanations) showCard("card-explain", S.ranked.map((it) => `<p><b>${it.rank}. ${esc(it.title)}</b><br>${esc(r.explanations[it.item_id])}</p>`).join(""));
+  if (r.saved) showSaved(r.saved);
+});
+$("#btn-save").onclick = (e) => withLoading(e.target, async () => showSaved(await api("/api/save", { profile: S.profile, ranked: S.ranked })));
+</script>
+</body>
+</html>

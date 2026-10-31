@@ -1,0 +1,18 @@
+digraph G {
+  graph [rankdir=TB, fontname="Helvetica", fontsize=11, nodesep=0.35, ranksep=0.42, pad=0.25, bgcolor="white", splines=spline];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, fillcolor="#ffffff", color="#334155", penwidth=1.2, margin="0.18,0.07"];
+  edge [color="#475569", arrowsize=0.7, penwidth=1.1, fontname="Helvetica", fontsize=10];
+user [label="User", shape=oval, fillcolor="#e2e8f0"];
+llm [label="Ollama (Local LLM Server)\nLlama 3.2", shape=box3d, fillcolor="#fde68a"];
+
+ui [label="Web Interface - Main Module (Flask)", fillcolor="#d1fae5"];
+inp [label="Input Module"]; prof [label="Profile Module"]; pref [label="Preference Module\n(LLM analysis)"];
+cat [label="catalog.csv", shape=cylinder, fillcolor="#dbeafe"];
+recm [label="Recommendation Module\nSemantic candidates + LLM pick"]; prm [label="Prompt Module"];
+rank [label="Ranking Module\nSuitability score %"]; expl [label="Explanation Module"];
+fb [label="Feedback Module", fillcolor="#fef3c7"]; intent [label="Intent Module", fillcolor="#fef3c7"];
+save [label="Save Module", fillcolor="#dcfce7"]; out [label="saved/*.json", shape=cylinder, fillcolor="#dbeafe"];
+user -> ui -> inp -> prof -> pref -> prm; cat -> recm; prof -> recm; prm -> recm -> rank -> expl;
+pref -> llm [style=dashed]; recm -> llm; expl -> llm;
+expl -> ui [style=dashed, label=" results"]; ui -> intent [label=" feedback"]; intent -> fb; fb -> prm [label=" refine", style=dashed]; intent -> save -> out;
+}
