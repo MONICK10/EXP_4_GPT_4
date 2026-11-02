@@ -1,27 +1,27 @@
 {
-  "exp_no": 4,
-  "name": "Monick S",
-  "register_number": "URK23CS1167",
-  "course_code": "24CS2506",
-  "course_name": "Building Applications using GPT-4",
-  "academic_year": "2026-2027",
-  "semester": "ODD SEMESTER",
-  "record_month": "NOVEMBER 2026",
-  "exam_date": "",
-  "llm_model": "Llama 3.2 (3B) via Ollama",
-  "versions_fallback": {
-    "Python": "3.13.5",
-    "Ollama": "0.6.2",
-    "VS Code": "1.133.0",
-    "Pandas": "2.3.3",
-    "Sentence Transformers": "5.7.0",
-    "Flask": "3.1.0"
-  },
-  "github_repo": "https://github.com/MONICK10/GPT4-Exp4-Personalized-Recommendation-System",
-  "dates": {
-    "4": "17.09.2026"
-  },
-  "linkedin": {
-    "4": ""
-  }
+    "exp_no":  4,
+    "name":  "Monick S",
+    "register_number":  "URK23CS1167",
+    "course_code":  "24CS2506",
+    "course_name":  "Building Applications using GPT-4",
+    "academic_year":  "2026-2027",
+    "semester":  "ODD SEMESTER",
+    "record_month":  "NOVEMBER 2026",
+    "exam_date":  "",
+    "llm_model":  "Llama 3.2 (3B) via Ollama",
+    "versions_fallback":  {
+                              "Python":  "3.13.5",
+                              "Ollama":  "0.6.2",
+                              "VS Code":  "1.133.0",
+                              "Pandas":  "2.3.3",
+                              "Sentence Transformers":  "5.7.0",
+                              "Flask":  "3.1.0"
+                          },
+    "github_repo":  "https://github.com/MONICK10/EXP_4_GPT_4",
+    "dates":  {
+                  "4":  "17.09.2026"
+              },
+    "linkedin":  {
+                     "4":  ""
+                 }
 }
