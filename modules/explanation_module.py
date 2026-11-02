@@ -6,6 +6,8 @@ def explain(items, profile):
     listing = "\n".join(f"{i['item_id']}: {i['title']} ({i['level']}, {i['type']}) - {i['description']}" for i in items)
     prompt = (f"User: {profile['summary']}. Preferences: {profile['preferences']}\n\nRecommended items:\n{listing}\n\n"
               "For each item, explain in 1-2 simple sentences why it is a good fit for this user.\n"
+              "Address the user directly as \"you\". The user's gender is not known, so never write "
+              "he, she, him or her.\n"
               'Return JSON: {"explanations": {"<item_id>": "<explanation>"}}')
     d = ask_json(prompt, default={}) or {}
     ex = d.get("explanations") if isinstance(d.get("explanations"), dict) else {}
